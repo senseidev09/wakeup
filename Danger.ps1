@@ -6,27 +6,38 @@ $SMTPPort = 587
 
 $fecha = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
 
+# Obtiene la dirección IP pública y la geolocalización
+try {
+    $ipInfo = Invoke-RestMethod -Uri "http://ip-api.com/json/?fields=query,country,city"
+    $ipPublica = $ipInfo.query
+    $pais = $ipInfo.country
+    $ciudad = $ipInfo.city
+}
+catch {
+    $ipPublica = "No se pudo obtener la IP"
+    $pais = "Desconocido"
+    $ciudad = "Desconocida"
+}
 
 $Message = @{
     From       = $EmailFrom
     To         = $EmailTo
-    Subject    = "Inicio de session"
+    Subject    = "Alerta: Inicio de Sesion"
     Body       = @"
-Se registro un inicio de session en tu dispositivo: $env:COMPUTERNAME
+Se registró un inicio de sesión en tu dispositivo: $env:COMPUTERNAME
 
-por el usuario: $env:USERNAME  el $fecha
+Por el usuario: $env:USERNAME
+Fecha: $fecha
 
+Dirección IP: $ipPublica
+Geolocalización: $ciudad, $pais
 
 Si no reconoces esta actividad, por favor contacta a Sensei.....
 "@
-
-
-
     SmtpServer = $SMTPServer
     Port = $SMTPPort
     Credential = New-Object System.Management.Automation.PSCredential ($EmailFrom, (ConvertTo-SecureString $AppPassword -AsPlainText -Force))
     UseSsl = $true
-
 }
 
 Send-MailMessage @Message
